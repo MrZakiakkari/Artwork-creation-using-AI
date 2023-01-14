@@ -1,10 +1,17 @@
 # importing the necessary libraries and the MNIST dataset
-import tensorflow as tf
+#import tensorflow as tf
+import tensorflow.compat.v1 as tf
+
 import numpy as np
 import matplotlib.pyplot as plt
-from tensorflow.examples.tutorials.mnist import input_data
-  
-mnist = input_data.read_data_sets("MNIST_data")
+from tensorflow.python.framework import ops
+
+tf.disable_v2_behavior()
+
+#from tensorflow.examples.tutorials.mnist import input_data
+
+mnist = tf.keras.datasets.mnist.load_data()
+#mnist = tf.examples.tutorials.mnist.read_data_sets("MNIST_data")
   
 # defining functions for the two networks.
 # Both the networks have two hidden layers
@@ -39,7 +46,9 @@ def discriminator(X, reuse = None):
         return output, logits
   
 # creating placeholders for the outputs
-tf.reset_default_graph()
+
+ops.reset_default_graph()
+
   
 real_images = tf.placeholder(tf.float32, shape =[None, 784])
 z = tf.placeholder(tf.float32, shape =[None, 100])
