@@ -1,110 +1,52 @@
-# importing the necessary libraries and the MNIST dataset
-import tensorflow as tf
-import numpy as np
-import matplotlib.pyplot as plt
+import pandas as pd
+import os
+from keras.optimizers import Adam
+
+# load celebrity images attributes
+df_celeb = pd.read_csv('list_attr_celeba.csv')
+TOTAL_SAMPLES = df_celeb.shape[0]
+
+# we will downscale the images
+SPATIAL_DIM = 64 
+# size of noise vector
+LATENT_DIM_GAN = 100 
+# filter size in conv layer
+FILTER_SIZE = 5
+# number of filters in conv layer
+NET_CAPACITY = 16
+# batch size
+BATCH_SIZE_GAN = 32
+# interval for displaying generated images
+PROGRESS_INTERVAL = 80 
+# directory for storing generated images
+ROOT_DIR = 'visualization'
+if not os.path.isdir(ROOT_DIR):
+    os.mkdir(ROOT_DIR)
+    
+
+
+def construct_models(verbose=False):
+    ### discriminator
+    discriminator = build_discriminator(NET_CAPACITY, SPATIAL_DIM, FILTER_SIZE)
+    # compile discriminator
+    discriminator.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.0002), metrics=['mae'])
+
+    ### generator
+    # do not compile generator
+    generator = build_generator(NET_CAPACITY, FILTER_SIZE, LATENT_DIM_GAN)
+
+    ### DCGAN 
+    gan = Sequential()
+    gan.add(generator)
+    gan.add(discriminator)
+    discriminator.trainable = False 
+    gan.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.0002), metrics=['mae'])
+
+    if verbose: 
+        generator.summary()
+        discriminator.summary()
+        gan.summary()
+        
+    return generator, discriminator, gan
   
-mnist = input_data.read_data_sets("MNIST_data")
-  
-# defining functions for the two networks.
-# Both the networks have two hidden layers
-# and an output layer which are densely or 
-# fully connected layers defining the 
-# Generator network function
-def generator(z, reuse = None):
-    with tf.variable_scope('gen', reuse = reuse):
-        hidden1 = tf.layers.dense(inputs = z, units = 128, 
-                            activation = tf.nn.leaky_relu)
-                              
-        hidden2 = tf.layers.dense(inputs = hidden1,
-           units = 128, activation = tf.nn.leaky_relu)
-             
-        output = tf.layers.dense(inputs = hidden2, 
-             units = 784, activation = tf.nn.tanh)
-          
-        return output
-  
-# defining the Discriminator network function 
-def discriminator(X, reuse = None):
-    with tf.variable_scope('dis', reuse = reuse):
-        hidden1 = tf.layers.dense(inputs = X, units = 128,
-                            activation = tf.nn.leaky_relu)
-                              
-        hidden2 = tf.layers.dense(inputs = hidden1,
-               units = 128, activation = tf.nn.leaky_relu)
-                 
-        logits = tf.layers.dense(hidden2, units = 1)
-        output = tf.sigmoid(logits)
-          
-        return output, logits
-  
-# creating placeholders for the outputs
-tf.reset_default_graph()
-  
-real_images = tf.placeholder(tf.float32, shape =[None, 784])
-z = tf.placeholder(tf.float32, shape =[None, 100])
-  
-G = generator(z)
-D_output_real, D_logits_real = discriminator(real_images)
-D_output_fake, D_logits_fake = discriminator(G, reuse = True)
-  
-# defining the loss function
-def loss_func(logits_in, labels_in):
-    return tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-                          logits = logits_in, labels = labels_in))
-  
- # Smoothing for generalization
-D_real_loss = loss_func(D_logits_real, tf.ones_like(D_logits_real)*0.9)
-D_fake_loss = loss_func(D_logits_fake, tf.zeros_like(D_logits_real))
-D_loss = D_real_loss + D_fake_loss
-  
-G_loss = loss_func(D_logits_fake, tf.ones_like(D_logits_fake))
-  
-# defining the learning rate, batch size,
-# number of epochs and using the Adam optimizer
-lr = 0.001 # learning rate
-  
-# Do this when multiple networks
-# interact with each other
-  
-# returns all variables created(the two
-# variable scopes) and makes trainable true
-tvars = tf.trainable_variables() 
-d_vars =[var for var in tvars if 'dis' in var.name]
-g_vars =[var for var in tvars if 'gen' in var.name]
-  
-D_trainer = tf.train.AdamOptimizer(lr).minimize(D_loss, var_list = d_vars)
-G_trainer = tf.train.AdamOptimizer(lr).minimize(G_loss, var_list = g_vars)
-  
-batch_size = 100 # batch size
-epochs = 500 # number of epochs. The higher the better the result
-init = tf.global_variables_initializer()
-  
-# creating a session to train the networks
-samples =[] # generator examples
-  
-with tf.Session() as sess:
-    sess.run(init)
-    for epoch in range(epochs):
-        num_batches = mnist.train.num_examples//batch_size
-          
-        for i in range(num_batches):
-            batch = mnist.train.next_batch(batch_size)
-            batch_images = batch[0].reshape((batch_size, 784))
-            batch_images = batch_images * 2-1
-            batch_z = np.random.uniform(-1, 1, size =(batch_size, 100))
-            _= sess.run(D_trainer, feed_dict ={real_images:batch_images, z:batch_z})
-            _= sess.run(G_trainer, feed_dict ={z:batch_z})
-              
-        print("on epoch{}".format(epoch))
-          
-        sample_z = np.random.uniform(-1, 1, size =(1, 100))
-        gen_sample = sess.run(generator(z, reuse = True),
-                                 feed_dict ={z:sample_z})
-          
-        samples.append(gen_sample)
-  
-# result after 0th epoch
-plt.imshow(samples[0].reshape(28, 28))
-  
-# result after 499th epoch
-plt.imshow(samples[49].reshape(28, 28))
+generator_celeb, discriminator_celeb, gan_celeb = construct_models(verbose=True)
