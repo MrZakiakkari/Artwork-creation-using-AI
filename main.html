@@ -1,0 +1,27 @@
+<!-- templates/index.html -->
+<html>
+  <head>
+    <title>GAN Model Deployment</title>
+  </head>
+  <body>
+    <h1>Input your data</h1>
+    <form action="{{ url_for('predict') }}" method="post">
+      <input type="text" name="input" placeholder="Enter your input here">
+      <input type="submit" value="Predict">
+    </form>
+      <input type="button" value="Request">
+	   <input type="button" value="Save">
+    </form>
+  </body>
+</html>
+
+<!-- templates/result.html -->
+<html>
+  <head>
+    <title>GAN Model Deployment</title>
+  </head>
+  <body>
+    <h1>Prediction Result</h1>
+    <p>{{ prediction }}</p>
+  </body>
+</html>
