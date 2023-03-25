@@ -1,10 +1,24 @@
 <!doctype html>
 <html>
   <head>
-    <title>Generated Image</title>
+    <title>AI Art Generator</title>
+    <style>
+       h1 {text-align: center;}
+       h2 {text-align: center;}
+       form {text-align: center;}
+    </style>
   </head>
   <body>
-    <h1>Generated Image</h1>
-    <img src="{{ image_url }}">
+    
+    <h1>AI Art Generator</h1>
+    <h2>Create art on the go</h2>
+    <p style="text-align:center;"><img src="{{image_url}}"></p>
+    <form method="post" action="/generate-image">
+      <input type="submit" value="Generate Another">
+    </form>
+    <form method="get" action="/generate-image">
+      <input type="submit" value="Save Image">
+    </form>
+    
   </body>
 </html>
